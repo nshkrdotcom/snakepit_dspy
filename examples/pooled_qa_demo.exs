@@ -36,7 +36,6 @@ defmodule PooledQADemo do
 
     # Wait for pool to initialize
     Logger.info("⏳ Waiting for pool to initialize...")
-    Process.sleep(3000)
     
     # Verify pool is running
     case GenServer.whereis(Snakepit.Pool) do
@@ -142,8 +141,7 @@ defmodule PooledQADemo do
               Logger.error("❌ Failed to get answer #{index}: #{inspect(reason)}")
           end
           
-          # Small delay between questions to see load balancing
-          Process.sleep(100)
+          # Load balancing happens automatically
         end)
         
         :ok

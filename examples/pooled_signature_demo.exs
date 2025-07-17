@@ -45,7 +45,6 @@ defmodule PooledSignatureDemo do
 
     # Wait for pool to initialize
     Logger.info("⏳ Waiting for pool to initialize...")
-    Process.sleep(3000)
     
     # Verify pool is running
     case GenServer.whereis(Snakepit.Pool) do
@@ -157,8 +156,7 @@ defmodule PooledSignatureDemo do
               Logger.error("❌ Failed to get answer: #{inspect(reason)}")
           end
           
-          # Small delay between questions
-          Process.sleep(500)
+          # Questions are processed immediately
         end)
         
         :ok
@@ -238,8 +236,7 @@ defmodule PooledSignatureDemo do
               Logger.error("❌ Failed to analyze code: #{inspect(reason)}")
           end
           
-          # Small delay between analyses
-          Process.sleep(500)
+          # Analyses are processed immediately
         end)
         
         :ok
