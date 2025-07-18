@@ -49,6 +49,10 @@ defmodule SnakepitDspy.Adapter do
 
   @behaviour Snakepit.Adapter
 
+  def executable_path do
+    System.find_executable("python3") || System.find_executable("python")
+  end
+
   @impl true
   def script_path do
     Path.join(:code.priv_dir(:snakepit_dspy), "python/dspy_bridge.py")

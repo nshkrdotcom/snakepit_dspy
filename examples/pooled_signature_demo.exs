@@ -1,7 +1,7 @@
 #!/usr/bin/env elixir
 
 # Comprehensive demo showing real LLM calls using Snakepit pooled interface
-# 
+#
 # This demo demonstrates:
 # 1. Configuring Gemini with the pooled interface
 # 2. Creating and using Q&A programs with real LLM calls
@@ -31,7 +31,7 @@ defmodule PooledSignatureDemo do
 
   def run do
     Logger.info("🚀 Starting Pooled Signature Demo with Real Gemini Calls")
-    
+
     # Check prerequisites
     unless System.get_env("GEMINI_API_KEY") do
       Logger.error("❌ GEMINI_API_KEY environment variable not set")
@@ -45,7 +45,7 @@ defmodule PooledSignatureDemo do
 
     # Wait for pool to initialize
     Logger.info("⏳ Waiting for pool to initialize...")
-    
+
     # Verify pool is running
     case GenServer.whereis(Snakepit.Pool) do
       nil ->
@@ -68,18 +68,18 @@ defmodule PooledSignatureDemo do
 
   defp configure_gemini do
     Logger.info("🔧 Configuring Gemini language model in all workers...")
-    
+
     config = %{
       model: "gemini-2.5-flash-lite-preview-06-17",
       api_key: System.get_env("GEMINI_API_KEY"),
       provider: "google",
       temperature: 0.7
     }
-    
+
     # Configure LM in multiple sessions to reach all workers
     # This ensures each worker has the LM configured locally
     sessions = ["worker_1_session", "worker_2_session", "worker_3_session"]
-    
+
     tasks = Enum.map(sessions, fn session_id ->
       Task.async(fn ->
         case SnakepitDspy.execute_in_session(session_id, "configure_lm", config) do
@@ -92,15 +92,38 @@ defmodule PooledSignatureDemo do
         end
       end)
     end)
-    
+
     # Wait for all configurations to complete
     results = Task.await_many(tasks, 10_000)
-    
+
     # Check if at least one worker was configured successfully
     success_count = Enum.count(results, &(&1 == :ok))
-    
+
     if success_count > 0 do
       Logger.info("✅ Gemini configured successfully in #{success_count}/#{length(sessions)} workers")
+
+      # Display a big happy notification
+      Logger.info("")
+      Logger.info("🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉")
+      Logger.info("🎉                                      🎉")
+      Logger.info("🎉   ALL POOLS WARMED UP AND READY!     🎉")
+      Logger.info("🎉                                      🎉")
+      Logger.info("🎉   Workers initialized: #{success_count}/#{length(sessions)}           🎉")
+      Logger.info("🎉   Status: OPERATIONAL                🎉")
+      Logger.info("🎉                                      🎉")
+      Logger.info("🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉")
+      Logger.info("")
+
+      # Wait 2 seconds with status updates every 0.5s
+      Logger.info("⏳ Starting demo in 2 seconds...")
+      Enum.each(1..4, fn i ->
+        Process.sleep(500)
+        remaining = 2.0 - (i * 0.5)
+        Logger.info("⏳ Starting in #{:erlang.float_to_binary(remaining, decimals: 1)} seconds... (#{i}/4)")
+      end)
+      Logger.info("🚀 Let's go!")
+      Logger.info("")
+
       :ok
     else
       Logger.error("❌ Failed to configure Gemini in any worker")
@@ -110,42 +133,42 @@ defmodule PooledSignatureDemo do
 
   defp demo_qa_program do
     Logger.info("🤖 Demo 1: Q&A Program with Real LLM Calls")
-    
+
     # Create a Q&A program using session-based execution
     program_id = "demo_qa_#{System.unique_integer([:positive])}"
     instructions = "You are a helpful assistant. Answer questions accurately and concisely."
-    
+
     Logger.info("Creating Q&A program: #{program_id}")
-    
+
     signature = %{
       name: "QuestionAnswer",
       inputs: [%{name: "question", type: "string", description: "A question to answer"}],
       outputs: [%{name: "answer", type: "string", description: "A helpful and accurate answer"}]
     }
-    
+
     program_def = %{
       id: program_id,
       signature: signature,
       instructions: instructions
     }
-    
+
     case SnakepitDspy.execute_in_session("demo_session", "create_program", program_def) do
       {:ok, result} ->
         Logger.info("✅ Q&A program created: #{inspect(result)}")
-        
+
         # Ask multiple questions to demonstrate real LLM calls
         questions = [
           "What is the capital of France?",
           "Explain what Elixir programming language is in one sentence.",
           "What are the benefits of using OTP in distributed systems?"
         ]
-        
+
         Enum.each(questions, fn question ->
           Logger.info("❓ Asking: #{question}")
-          
+
           inputs = %{question: question}
           case SnakepitDspy.execute_in_session("demo_session", "execute_program", %{
-            program_id: program_id, 
+            program_id: program_id,
             inputs: inputs
           }) do
             {:ok, result} ->
@@ -155,12 +178,12 @@ defmodule PooledSignatureDemo do
             {:error, reason} ->
               Logger.error("❌ Failed to get answer: #{inspect(reason)}")
           end
-          
+
           # Questions are processed immediately
         end)
-        
+
         :ok
-        
+
       {:error, reason} ->
         Logger.error("❌ Failed to create Q&A program: #{inspect(reason)}")
         {:error, reason}
@@ -169,10 +192,10 @@ defmodule PooledSignatureDemo do
 
   defp demo_signature_program do
     Logger.info("📝 Demo 2: Signature Program with Real LLM Calls")
-    
+
     # Create a more complex signature for code analysis
     program_id = "demo_signature_#{System.unique_integer([:positive])}"
-    
+
     signature = %{
       name: "CodeAnalyzer",
       inputs: [
@@ -184,11 +207,11 @@ defmodule PooledSignatureDemo do
         %{name: "suggestions", type: "string", description: "Specific improvement suggestions"}
       ]
     }
-    
+
     instructions = "Analyze the provided code for quality, structure, and best practices. Provide constructive feedback."
-    
+
     Logger.info("Creating signature program: #{program_id}")
-    
+
     case SnakepitDspy.execute_in_session("demo_session", "create_program", %{
       id: program_id,
       signature: signature,
@@ -196,7 +219,7 @@ defmodule PooledSignatureDemo do
     }) do
       {:ok, result} ->
         Logger.info("✅ Signature program created: #{inspect(result)}")
-        
+
         # Test with different code samples
         code_samples = [
           %{
@@ -216,10 +239,10 @@ defmodule PooledSignatureDemo do
             language: "javascript"
           }
         ]
-        
+
         Enum.each(code_samples, fn sample ->
           Logger.info("🔍 Analyzing #{sample.language} code...")
-          
+
           case SnakepitDspy.execute_in_session("demo_session", "execute_program", %{
             program_id: program_id,
             inputs: sample
@@ -228,19 +251,19 @@ defmodule PooledSignatureDemo do
               outputs = result["outputs"] || %{}
               analysis = outputs["analysis"] || "No analysis provided"
               suggestions = outputs["suggestions"] || "No suggestions provided"
-              
+
               Logger.info("📊 Analysis: #{analysis}")
               Logger.info("💡 Suggestions: #{suggestions}")
-              
+
             {:error, reason} ->
               Logger.error("❌ Failed to analyze code: #{inspect(reason)}")
           end
-          
+
           # Analyses are processed immediately
         end)
-        
+
         :ok
-        
+
       {:error, reason} ->
         Logger.error("❌ Failed to create signature program: #{inspect(reason)}")
         {:error, reason}
